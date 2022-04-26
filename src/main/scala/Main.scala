@@ -1,8 +1,9 @@
+import org.apache.kafka.clients.consumer.ConsumerConfig
+
 import java.util.Properties
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.serialization.Serdes.{longSerde, stringSerde}
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
-import java.util.concurrent.TimeUnit
 
 
 object WordCountApplication extends App {
@@ -14,15 +15,17 @@ object WordCountApplication extends App {
     val p = new Properties()
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-application")
     p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, ":9092")
+    p.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 0)
     p
   }
 
   val builder = new StreamsBuilder
   val textLines = builder.stream[String, String]("another_topic")
-  val wordCounts: KTable[String, Long] = textLines
+  val wordCounts: KTable[String, String] = textLines
     .flatMapValues(textLine => textLine.toLowerCase.split("\\W+"))
     .groupBy((_, word) => word)
     .count()
+    .mapValues(_.toString)
   println(wordCounts)
     wordCounts.toStream.to("WordsWithCountsTopic")
 
