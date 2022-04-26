@@ -1,7 +1,9 @@
 import java.util.Properties
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala.serialization.Serdes.{longSerde, stringSerde}
-import org.apache.kafka.streams.{StreamsConfig}
+import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
+import java.util.concurrent.TimeUnit
+
 
 object WordCountApplication extends App {
 
@@ -11,7 +13,7 @@ object WordCountApplication extends App {
   val props: Properties = {
     val p = new Properties()
     p.put(StreamsConfig.APPLICATION_ID_CONFIG, "wordcount-application")
-    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka-broker1:9092")
+    p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, ":9092")
     p
   }
 
@@ -22,12 +24,12 @@ object WordCountApplication extends App {
     .groupBy((_, word) => word)
     .count()
   println(wordCounts)
-  //  wordCounts.toStream.to("WordsWithCountsTopic")
-  //
-  //  val streams: KafkaStreams = new KafkaStreams(builder.build(), props)
-  //  streams.start()
-  //
-  //  sys.ShutdownHookThread {
-  //    streams.close
-  //  }
+    wordCounts.toStream.to("WordsWithCountsTopic")
+
+    val streams: KafkaStreams = new KafkaStreams(builder.build(), props)
+    streams.start()
+
+    sys.ShutdownHookThread {
+      streams.close()
+    }
 }
